@@ -793,7 +793,7 @@ npm install react-markdown
             </button>
             <div className="flex flex-col">
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                ClicWriter
+                ✨ ClicWriter
               </h1>
               {currentChat?.title && (
                 <span className="text-xs text-muted-foreground">
