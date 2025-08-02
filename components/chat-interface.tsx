@@ -865,10 +865,10 @@ npm install react-markdown
                 </TextAnimate>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    "Explique conceitos complexos",
-                    "Ajude com programação",
-                    "Escreva textos criativos",
-                    "Resolva problemas"
+                    "📰 Criar matéria com lead e pirâmide invertida",
+                    "🎯 Gerar 3 títulos atrativos para notícia",
+                    "📱 Adaptar texto para redes sociais do Clic RDC",
+                    "🔍 Sugerir pautas sobre Rondônia"
                   ].map((suggestion, index) => (
                     <button
                       key={index}
