@@ -978,7 +978,7 @@ npm install react-markdown
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium">Assistente</span>
-                      <span className="text-xs text-muted-foreground">está digitando...</span>
+                      <span className="text-xs text-muted-foreground">está pensando...</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-primary rounded-full loading-dot-1" />
