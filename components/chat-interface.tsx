@@ -97,6 +97,60 @@ export default function ChatInterface() {
     }
   }, [theme]);
 
+  // Funções para gerenciar localStorage das conversas
+  const saveChatsToLocalStorage = (chatsToSave: Chat[]) => {
+    try {
+      const chatsData = {
+        chats: chatsToSave,
+        currentChatId,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('clicwriter-chats', JSON.stringify(chatsData));
+      console.log('Conversas salvas no localStorage:', chatsToSave.length, 'conversas');
+    } catch (error) {
+      console.error('Erro ao salvar conversas no localStorage:', error);
+    }
+  };
+
+  const loadChatsFromLocalStorage = (): { chats: Chat[], currentChatId: string | null } => {
+    try {
+      const savedData = localStorage.getItem('clicwriter-chats');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        // Converter strings de data de volta para objetos Date
+        const chats = parsedData.chats.map((chat: any) => ({
+          ...chat,
+          createdAt: new Date(chat.createdAt),
+          messages: chat.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        }));
+        console.log('Conversas carregadas do localStorage:', chats.length, 'conversas');
+        return { chats, currentChatId: parsedData.currentChatId };
+      }
+    } catch (error) {
+      console.error('Erro ao carregar conversas do localStorage:', error);
+    }
+    return { chats: [], currentChatId: null };
+  };
+
+  // Carregar conversas salvas na inicialização
+  useEffect(() => {
+    const { chats: savedChats, currentChatId: savedCurrentChatId } = loadChatsFromLocalStorage();
+    if (savedChats.length > 0) {
+      setChats(savedChats);
+      setCurrentChatId(savedCurrentChatId);
+    }
+  }, []);
+
+  // Salvar conversas sempre que houver mudanças
+  useEffect(() => {
+    if (chats.length > 0) {
+      saveChatsToLocalStorage(chats);
+    }
+  }, [chats, currentChatId]);
+
   const createNewChat = () => {
     const chatId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const newChat: Chat = {
