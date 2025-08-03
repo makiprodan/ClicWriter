@@ -837,65 +837,100 @@ npm install react-markdown
         />
 
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-background/80 backdrop-blur-sm relative z-10">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="flex flex-col">
+        <div className="border-b border-border bg-background/80 backdrop-blur-sm relative z-10">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                 ✨ ClicWriter
               </h1>
-              {currentChat?.title && (
-                <span className="text-xs text-muted-foreground">
-                  {currentChat.title}
-                </span>
-              )}
+            </div>
+            
+            {/* Theme Selector */}
+            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+              <button
+                onClick={() => applyTheme('light')}
+                className={cn(
+                  "p-2 rounded-md transition-all duration-200",
+                  theme === 'light' 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+                title="Tema claro"
+              >
+                <Sun className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => applyTheme('dark')}
+                className={cn(
+                  "p-2 rounded-md transition-all duration-200",
+                  theme === 'dark' 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+                title="Tema escuro"
+              >
+                <Moon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => applyTheme('system')}
+                className={cn(
+                  "p-2 rounded-md transition-all duration-200",
+                  theme === 'system' 
+                    ? "bg-background shadow-sm text-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+                title="Tema automático"
+              >
+                <Monitor className="h-4 w-4" />
+              </button>
             </div>
           </div>
           
-          {/* Theme Selector */}
-          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-            <button
-              onClick={() => applyTheme('light')}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200",
-                theme === 'light' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              )}
-              title="Tema claro"
-            >
-              <Sun className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => applyTheme('dark')}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200",
-                theme === 'dark' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              )}
-              title="Tema escuro"
-            >
-              <Moon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => applyTheme('system')}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200",
-                theme === 'system' 
-                  ? "bg-background shadow-sm text-foreground" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              )}
-              title="Tema automático"
-            >
-              <Monitor className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Título da Conversa Editável */}
+          {currentChat && (
+            <div className="px-4 pb-3">
+              <div className="group flex items-center gap-2 ml-14"> {/* ml-14 para alinhar com a letra C do ClicWriter */}
+                {editingChatId === currentChat.id ? (
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(e) => setEditingTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveEditingTitle();
+                      if (e.key === 'Escape') cancelEditingTitle();
+                    }}
+                    onBlur={saveEditingTitle}
+                    className="flex-1 text-sm font-medium bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                    autoFocus
+                    placeholder="Digite o título da conversa..."
+                  />
+                ) : (
+                  <>
+                    <span 
+                      className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex-1"
+                      onClick={() => startEditingTitle(currentChat.id, currentChat.title)}
+                      title="Clique para editar o título"
+                    >
+                      {currentChat.title || "Conversa sem título"}
+                    </span>
+                    <button
+                      onClick={() => startEditingTitle(currentChat.id, currentChat.title)}
+                      className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Editar título"
+                    >
+                      <Edit3 className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Messages */}
