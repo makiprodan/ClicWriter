@@ -868,7 +868,7 @@ npm install react-markdown
                     "📰 Criar matéria com lead e pirâmide invertida",
                     "🎯 Gerar 3 títulos atrativos para notícia",
                     "📱 Adaptar texto para redes sociais do Clic RDC",
-                    "🔥 Busque os 5 trending topics da última hora (Mundo, Brasil, Oeste SC) em Google Trends, X/Twitter, TikTok Trending e Reddit r/all. Para cada tópico, devolva título-resumo, palavra-chave principal, fonte e link."
+                    "🔥 Levante 5 assuntos em alta agora (última hora — Mundo, Brasil, Oeste SC) a partir de Google News, capas de grandes portais (G1, Folha, CNN, UOL) e X/Twitter."
                   ].map((suggestion, index) => (
                     <button
                       key={index}
