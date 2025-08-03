@@ -868,7 +868,7 @@ npm install react-markdown
                     "📰 Criar matéria com lead e pirâmide invertida",
                     "🎯 Gerar 3 títulos atrativos para notícia",
                     "📱 Adaptar texto para redes sociais do Clic RDC",
-                    "🔥 Levante 5 assuntos em alta agora (última hora — Mundo, Brasil, Oeste SC) a partir de Google News, capas de grandes portais (G1, Folha, CNN, UOL) e X/Twitter."
+                    "🔥 Levante as principais notícias em alta da última hora (Mundo / Brasil / Oeste SC) pesquisando Google News, G1, Folha, CNN, UOL e X/Twitter; entregue cada matéria com título-resumo, data e hora da publicação, fonte e link."
                   ].map((suggestion, index) => (
                     <button
                       key={index}
