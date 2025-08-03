@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Plus, Menu, User, Bot, Trash2, Edit3, Paperclip, Mic, MicOff, Upload, Square, Play, X, Sun, Moon, Monitor } from "lucide-react";
+import { Send, Plus, Menu, User, Bot, Trash2, Edit3, Paperclip, Mic, MicOff, Upload, Square, Play, X, Check, Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
@@ -773,18 +773,50 @@ npm install react-markdown
                 <div className="flex-1 min-w-0">
                   {editingChatId === chat.id ? (
                     <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveEditingTitle();
-                          if (e.key === 'Escape') cancelEditingTitle();
-                        }}
-                        onBlur={saveEditingTitle}
-                        className="w-full text-sm font-medium bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                        autoFocus
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveEditingTitle();
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelEditingTitle();
+                            }
+                          }}
+                          className="flex-1 text-sm font-medium bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
+                          autoFocus
+                          placeholder="Digite o título..."
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              saveEditingTitle();
+                            }}
+                            className="p-1 hover:bg-green-100 dark:hover:bg-green-900 rounded text-green-600 dark:text-green-400"
+                            title="Salvar"
+                          >
+                            <Check className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              cancelEditingTitle();
+                            }}
+                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded text-red-600 dark:text-red-400"
+                            title="Cancelar"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {chat.messages.length} mensagens
                       </p>
@@ -798,22 +830,26 @@ npm install react-markdown
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       startEditingTitle(chat.id, chat.title);
                     }}
-                    className="p-1 hover:bg-muted rounded"
+                    className="p-1 hover:bg-muted rounded transition-colors"
+                    title="Editar título"
                   >
                     <Edit3 className="h-3 w-3" />
                   </button>
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       deleteChat(chat.id);
                     }}
-                    className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                    className="p-1 hover:bg-destructive/20 rounded text-destructive transition-colors"
+                    title="Excluir conversa"
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -839,7 +875,7 @@ npm install react-markdown
         {/* Header */}
         <div className="border-b border-border bg-background/80 backdrop-blur-sm relative z-10">
           <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-1">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -849,6 +885,85 @@ npm install react-markdown
               <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                 ✨ ClicWriter
               </h1>
+              
+              {/* Título da Conversa na mesma linha */}
+              {currentChat && (
+                <>
+                  <div className="h-6 w-px bg-border mx-2"></div>
+                  <div className="group flex items-center gap-2 flex-1 min-w-0">
+                    {editingChatId === currentChat.id ? (
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveEditingTitle();
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelEditingTitle();
+                            }
+                          }}
+                          className="flex-1 text-sm font-medium bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
+                          autoFocus
+                          placeholder="Digite o título da conversa..."
+                        />
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              saveEditingTitle();
+                            }}
+                            className="p-1 hover:bg-green-100 dark:hover:bg-green-900 rounded text-green-600 dark:text-green-400"
+                            title="Salvar"
+                          >
+                            <Check className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              cancelEditingTitle();
+                            }}
+                            className="p-1 hover:bg-red-100 dark:hover:bg-red-900 rounded text-red-600 dark:text-red-400"
+                            title="Cancelar"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <span 
+                          className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors truncate"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            startEditingTitle(currentChat.id, currentChat.title);
+                          }}
+                          title="Clique para editar o título"
+                        >
+                          {currentChat.title || "Conversa sem título"}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            startEditingTitle(currentChat.id, currentChat.title);
+                          }}
+                          className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100 transition-all duration-200 flex-shrink-0"
+                          title="Editar título"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             
             {/* Theme Selector */}
@@ -891,46 +1006,6 @@ npm install react-markdown
               </button>
             </div>
           </div>
-          
-          {/* Título da Conversa Editável */}
-          {currentChat && (
-            <div className="px-4 pb-3">
-              <div className="group flex items-center gap-2 ml-14"> {/* ml-14 para alinhar com a letra C do ClicWriter */}
-                {editingChatId === currentChat.id ? (
-                  <input
-                    type="text"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveEditingTitle();
-                      if (e.key === 'Escape') cancelEditingTitle();
-                    }}
-                    onBlur={saveEditingTitle}
-                    className="flex-1 text-sm font-medium bg-background border border-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary"
-                    autoFocus
-                    placeholder="Digite o título da conversa..."
-                  />
-                ) : (
-                  <>
-                    <span 
-                      className="text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex-1"
-                      onClick={() => startEditingTitle(currentChat.id, currentChat.title)}
-                      title="Clique para editar o título"
-                    >
-                      {currentChat.title || "Conversa sem título"}
-                    </span>
-                    <button
-                      onClick={() => startEditingTitle(currentChat.id, currentChat.title)}
-                      className="p-1 hover:bg-muted rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Editar título"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Messages */}
