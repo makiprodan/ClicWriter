@@ -1,4 +1,4 @@
-# ChatGPT Clone
+# ClicWriter
 
 Um clone do ChatGPT criado com Next.js, React, TypeScript e componentes do Magic UI.
 
