@@ -868,7 +868,7 @@ npm install react-markdown
                     "📰 Criar matéria com lead e pirâmide invertida",
                     "🎯 Gerar 3 títulos atrativos para notícia",
                     "📱 Adaptar texto para redes sociais do Clic RDC",
-                    "🔥 Trends e viral: Brasil e Mundo"
+                    "🔥 Buscar Tendências & Virais"
                   ].map((suggestion, index) => (
                     <button
                       key={index}
