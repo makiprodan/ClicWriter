@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Plus, Menu, User, Bot, Trash2, Edit3, Paperclip, Mic, MicOff, Upload, Square, Play, X, Check, Sun, Moon, Monitor } from "lucide-react";
+import { Send, Plus, Menu, User, Bot, Trash2, Edit3, Paperclip, Mic, MicOff, Upload, Square, Play, X, Check, Sun, Moon, Monitor, Loader2, FolderOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { DotPattern } from "@/components/ui/dot-pattern";
+import { ProcessingButton } from "@/components/ui/processing-button";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -14,12 +15,21 @@ interface Message {
   content: string;
   role: "user" | "assistant";
   timestamp: Date;
+  sectionId?: string;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  isCollapsed: boolean;
+  createdAt: Date;
 }
 
 interface Chat {
   id: string;
   title: string;
   messages: Message[];
+  sections: Section[];
   createdAt: Date;
 }
 
@@ -28,6 +38,7 @@ export default function ChatInterface() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -35,6 +46,8 @@ export default function ChatInterface() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [currentSectionId, setCurrentSectionId] = useState<string | null>(null);
+  const [showSectionControls, setShowSectionControls] = useState(false);
   const [user_id] = useState(() => {
     // Gera um user_id único para cada aba/seção do navegador
     const timestamp = Date.now();
@@ -117,14 +130,23 @@ export default function ChatInterface() {
       const savedData = localStorage.getItem('clicwriter-chats');
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        // Converter strings de data de volta para objetos Date
+        // Converter strings de data de volta para objetos Date e garantir que sections existe
         const chats = parsedData.chats.map((chat: any) => ({
           ...chat,
           createdAt: new Date(chat.createdAt),
-          messages: chat.messages.map((msg: any) => ({
+          sections: Array.isArray(chat.sections) ? chat.sections.map((section: any) => ({
+            ...section,
+            createdAt: section.createdAt ? new Date(section.createdAt) : new Date()
+          })) : [{
+            id: `section_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+            title: "Seção Principal",
+            isCollapsed: false,
+            createdAt: new Date(),
+          }],
+          messages: Array.isArray(chat.messages) ? chat.messages.map((msg: any) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
-          }))
+          })) : []
         }));
         console.log('Conversas carregadas do localStorage:', chats.length, 'conversas');
         return { chats, currentChatId: parsedData.currentChatId };
@@ -153,15 +175,23 @@ export default function ChatInterface() {
 
   const createNewChat = () => {
     const chatId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const defaultSectionId = `section_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const newChat: Chat = {
       id: chatId,
       title: "Nova Conversa",
       messages: [],
+      sections: [{
+        id: defaultSectionId,
+        title: "Seção Principal",
+        isCollapsed: false,
+        createdAt: new Date(),
+      }],
       createdAt: new Date(),
     };
     setChats(prev => [newChat, ...prev]);
     setCurrentChatId(chatId);
-    console.log('Nova conversa criada:', { user_id, chatId });
+    setCurrentSectionId(defaultSectionId);
+    console.log('Nova conversa criada:', { user_id, chatId, defaultSectionId });
     return chatId;
   };
 
@@ -194,6 +224,62 @@ export default function ChatInterface() {
   const cancelEditingTitle = () => {
     setEditingChatId(null);
     setEditingTitle("");
+  };
+
+  const createNewSection = (title: string = "Nova Seção") => {
+    if (!currentChatId) return null;
+    
+    const sectionId = `section_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const newSection: Section = {
+      id: sectionId,
+      title,
+      isCollapsed: false,
+      createdAt: new Date(),
+    };
+    
+    setChats(prev => prev.map(chat => 
+      chat.id === currentChatId 
+        ? { ...chat, sections: [...(chat.sections || []), newSection] }
+        : chat
+    ));
+    
+    setCurrentSectionId(sectionId);
+    return sectionId;
+  };
+
+  const toggleSectionCollapse = (sectionId: string) => {
+    setChats(prev => prev.map(chat => 
+      chat.id === currentChatId 
+        ? { 
+            ...chat, 
+            sections: (chat.sections || []).map(section => 
+              section.id === sectionId 
+                ? { ...section, isCollapsed: !section.isCollapsed }
+                : section
+            )
+          }
+        : chat
+    ));
+  };
+
+  const deleteSection = (sectionId: string) => {
+    if (!currentChatId) return;
+    
+    setChats(prev => prev.map(chat => 
+      chat.id === currentChatId 
+        ? { 
+            ...chat, 
+            sections: (chat.sections || []).filter(section => section.id !== sectionId),
+            messages: (chat.messages || []).filter(message => message.sectionId !== sectionId)
+          }
+        : chat
+    ));
+    
+    if (currentSectionId === sectionId) {
+      const currentChat = chats.find(chat => chat.id === currentChatId);
+      const remainingSections = (currentChat?.sections || []).filter(s => s.id !== sectionId);
+      setCurrentSectionId(remainingSections?.[0]?.id || null);
+    }
   };
 
   const sendToWebhook = async (data: {
@@ -314,7 +400,7 @@ export default function ChatInterface() {
 
             setChats(prev => prev.map(chat => 
               chat.id === chatId 
-                ? { ...chat, messages: [...chat.messages, audioMessage] }
+                ? { ...chat, messages: [...(chat.messages || []), audioMessage] }
                 : chat
             ));
 
@@ -338,7 +424,7 @@ export default function ChatInterface() {
 
               setChats(prev => prev.map(chat => 
                 chat.id === chatId 
-                  ? { ...chat, messages: [...chat.messages, assistantMessage] }
+                  ? { ...chat, messages: [...(chat.messages || []), assistantMessage] }
                   : chat
               ));
             }
@@ -361,7 +447,7 @@ export default function ChatInterface() {
 
             setChats(prev => prev.map(chat => 
               chat.id === chatId 
-                ? { ...chat, messages: [...chat.messages, errorMessage] }
+                ? { ...chat, messages: [...(chat.messages || []), errorMessage] }
                 : chat
             ));
           }
@@ -449,7 +535,7 @@ export default function ChatInterface() {
 
       setChats(prev => prev.map(chat => 
         chat.id === chatId 
-          ? { ...chat, messages: [...chat.messages, fileMessage] }
+          ? { ...chat, messages: [...(chat.messages || []), fileMessage] }
           : chat
       ));
 
@@ -473,7 +559,7 @@ export default function ChatInterface() {
 
         setChats(prev => prev.map(chat => 
           chat.id === chatId 
-            ? { ...chat, messages: [...chat.messages, assistantMessage] }
+            ? { ...chat, messages: [...(chat.messages || []), assistantMessage] }
             : chat
         ));
       }
@@ -500,7 +586,7 @@ export default function ChatInterface() {
 
       setChats(prev => prev.map(chat => 
         chat.id === chatId 
-          ? { ...chat, messages: [...chat.messages, errorMessage] }
+          ? { ...chat, messages: [...(chat.messages || []), errorMessage] }
           : chat
       ));
     }
@@ -522,11 +608,23 @@ export default function ChatInterface() {
       chatToUpdate = chats.find(chat => chat.id === chatId);
     }
 
+    // Garantir que há uma seção atual
+    let sectionId = currentSectionId;
+    if (!sectionId) {
+      if (chatToUpdate?.sections && chatToUpdate.sections.length > 0) {
+        sectionId = chatToUpdate.sections[0].id;
+        setCurrentSectionId(sectionId);
+      } else {
+        sectionId = createNewSection("Seção Principal");
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input.trim(),
       role: "user",
       timestamp: new Date(),
+      sectionId: sectionId!,
     };
 
     // Atualizar o título do chat se for a primeira mensagem
@@ -537,13 +635,14 @@ export default function ChatInterface() {
 
     setChats(prev => prev.map(chat => 
       chat.id === chatId 
-        ? { ...chat, messages: [...chat.messages, userMessage] }
+        ? { ...chat, messages: [...(chat.messages || []), userMessage] }
         : chat
     ));
 
     const messageText = input.trim();
     setInput("");
     setIsLoading(true);
+    setIsProcessing(true);
 
     try {
       // Enviar para o webhook e processar resposta
@@ -559,20 +658,24 @@ export default function ChatInterface() {
         content: response || generateAIResponse(messageText),
         role: "assistant",
         timestamp: new Date(),
+        sectionId: sectionId!,
       };
 
       setChats(prev => prev.map(chat => 
         chat.id === chatId
-          ? { ...chat, messages: [...chat.messages, assistantMessage] }
+          ? { ...chat, messages: [...(chat.messages || []), assistantMessage] }
           : chat
       ));
+      
       // Delay mínimo para garantir que o loading seja visível
       setTimeout(() => {
         setIsLoading(false);
+        setIsProcessing(false);
       }, 500);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       setIsLoading(false);
+      setIsProcessing(false);
       
       // Fallback para resposta local em caso de erro
       const assistantMessage: Message = {
@@ -580,11 +683,12 @@ export default function ChatInterface() {
         content: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
         role: "assistant",
         timestamp: new Date(),
+        sectionId: sectionId!,
       };
 
       setChats(prev => prev.map(chat => 
         chat.id === chatId
-          ? { ...chat, messages: [...chat.messages, assistantMessage] }
+          ? { ...chat, messages: [...(chat.messages || []), assistantMessage] }
           : chat
       ));
     }
@@ -632,7 +736,7 @@ export default function ChatInterface() {
 
     setChats(prev => prev.map(chat => 
       chat.id === chatId 
-        ? { ...chat, messages: [...chat.messages, testMessage, assistantMessage] }
+        ? { ...chat, messages: [...(chat.messages || []), testMessage, assistantMessage] }
         : chat
     ));
   };
@@ -749,11 +853,15 @@ npm install react-markdown
             <h2 className="text-lg font-semibold">Conversas</h2>
             <ShimmerButton
               onClick={createNewChat}
-              className="h-8 w-8 p-0 group"
+              className="h-10 w-10 p-0 group relative shimmer-button-force"
               background="rgba(59, 130, 246, 0.1)"
               shimmerColor="#3b82f6"
+              title="Criar nova conversa"
             >
-              <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
+              <Plus className="h-5 w-5 transition-all duration-300 group-hover:rotate-90 group-hover:scale-110" />
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                Nova conversa
+              </div>
             </ShimmerButton>
           </div>
 
@@ -818,14 +926,14 @@ npm install react-markdown
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {chat.messages.length} mensagens
+                        {(chat.messages || []).length} mensagens
                       </p>
                     </div>
                   ) : (
                     <>
                       <p className="text-sm font-medium truncate">{chat.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {chat.messages.length} mensagens
+                        {(chat.messages || []).length} mensagens
                       </p>
                     </>
                   )}
@@ -1010,7 +1118,7 @@ npm install react-markdown
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 relative z-10">
-          {!currentChat || currentChat.messages.length === 0 ? (
+          {!currentChat || (currentChat.messages || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="max-w-md">
                 <TextAnimate
@@ -1023,10 +1131,11 @@ npm install react-markdown
                 <TextAnimate
                   animation="fadeIn"
                   delay={0.5}
-                  className="text-muted-foreground mb-8"
+                  className="text-muted-foreground mb-6"
                 >
                   Faça uma pergunta ou inicie uma conversa. Estou aqui para ajudar com qualquer coisa que você precisar.
                 </TextAnimate>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     "📰 Criar matéria com lead e pirâmide invertida",
@@ -1053,96 +1162,184 @@ npm install react-markdown
             </div>
           ) : (
             <div className="max-w-4xl mx-auto space-y-6">
-              {currentChat.messages.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-4 p-4 rounded-lg",
-                    message.role === "user" 
-                      ? "bg-primary/5 ml-12" 
-                      : "bg-muted/30 mr-12"
-                  )}
-                >
-                  <div className={cn(
-                    "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                    message.role === "user" 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {message.role === "user" ? (
-                      <User className="h-4 w-4" />
-                    ) : (
-                      <Bot className="h-4 w-4" />
-                    )}
+              {/* Controles de Seção */}
+              {showSectionControls && currentChat && (
+                <div className="bg-muted/20 border border-border rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Controle de Seções
+                    </h3>
+                    <button
+                      onClick={() => createNewSection(`Nova Seção ${(currentChat.sections || []).length + 1}`)}
+                      className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors"
+                    >
+                      + Nova Seção
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium">
-                        {message.role === "user" ? "Você" : "Assistente"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {message.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          // Customizar componentes do markdown
-                          code: ({ node, inline, className, children, ...props }: any) => {
-                            const match = /language-(\w+)/.exec(className || '');
-                            return !inline ? (
-                              <pre className="bg-muted p-3 rounded-lg overflow-x-auto">
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              </pre>
-                            ) : (
-                              <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>
-                                {children}
-                              </code>
-                            );
-                          },
-                          blockquote: ({ children }: any) => (
-                            <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">
-                              {children}
-                            </blockquote>
-                          ),
-                          table: ({ children }: any) => (
-                            <div className="overflow-x-auto">
-                              <table className="min-w-full border-collapse border border-border">
-                                {children}
-                              </table>
-                            </div>
-                          ),
-                          th: ({ children }: any) => (
-                            <th className="border border-border px-3 py-2 bg-muted font-semibold text-left">
-                              {children}
-                            </th>
-                          ),
-                          td: ({ children }: any) => (
-                            <td className="border border-border px-3 py-2">
-                              {children}
-                            </td>
-                          ),
-                        }}
+                  <div className="space-y-2">
+                    {(currentChat.sections || []).map((section) => (
+                      <div
+                        key={section.id}
+                        className={cn(
+                          "flex items-center justify-between p-2 rounded-md border transition-colors",
+                          currentSectionId === section.id 
+                            ? "bg-primary/10 border-primary/30" 
+                            : "bg-background border-border hover:bg-muted/50"
+                        )}
                       >
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleSectionCollapse(section.id)}
+                            className="p-1 hover:bg-muted rounded"
+                          >
+                            {section.isCollapsed ? (
+                              <ChevronRight className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => setCurrentSectionId(section.id)}
+                            className="text-sm font-medium flex-1 text-left"
+                          >
+                            {section.title}
+                          </button>
+                          <span className="text-xs text-muted-foreground">
+                            {(currentChat.messages || []).filter(m => m.sectionId === section.id).length} msgs
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => deleteSection(section.id)}
+                          className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Renderização das mensagens por seção */}
+              {(currentChat.sections || []).map((section) => {
+                const sectionMessages = (currentChat.messages || []).filter(m => m.sectionId === section.id);
+                if (sectionMessages.length === 0 || section.isCollapsed) return null;
+
+                return (
+                  <div key={section.id} className="space-y-4">
+                    {/* Cabeçalho da Seção */}
+                    <div className="flex items-center gap-2 py-2">
+                      <div className="flex-1 h-px bg-border" />
+                      <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-full">
+                        <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {section.title}
+                        </span>
+                      </div>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+
+                    {/* Mensagens da Seção */}
+                    {sectionMessages.map((message, index) => (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex gap-4 p-4 rounded-lg",
+                          message.role === "user" 
+                            ? "bg-primary/5 ml-12" 
+                            : "bg-muted/30 mr-12"
+                        )}
+                      >
+                        <div className={cn(
+                          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                          message.role === "user" 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {message.role === "user" ? (
+                            <User className="h-4 w-4" />
+                          ) : (
+                            <Bot className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">
+                              {message.role === "user" ? "Você" : "Assistente"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <div className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                // Customizar componentes do markdown
+                                code: ({ node, inline, className, children, ...props }: any) => {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  return !inline ? (
+                                    <pre className="bg-muted p-3 rounded-lg overflow-x-auto">
+                                      <code className={className} {...props}>
+                                        {children}
+                                      </code>
+                                    </pre>
+                                  ) : (
+                                    <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                                blockquote: ({ children }: any) => (
+                                  <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">
+                                    {children}
+                                  </blockquote>
+                                ),
+                                table: ({ children }: any) => (
+                                  <div className="overflow-x-auto">
+                                    <table className="min-w-full border-collapse border border-border">
+                                      {children}
+                                    </table>
+                                  </div>
+                                ),
+                                th: ({ children }: any) => (
+                                  <th className="border border-border px-3 py-2 bg-muted font-semibold text-left">
+                                    {children}
+                                  </th>
+                                ),
+                                td: ({ children }: any) => (
+                                  <td className="border border-border px-3 py-2">
+                                    {children}
+                                  </td>
+                                ),
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
               
               {isLoading && (
                 <div className="flex gap-4 p-4 rounded-lg bg-muted/30 mr-12 border border-primary/20">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                    <Bot className="h-4 w-4" />
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bot className="h-4 w-4" />
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-medium">Assistente</span>
-                      <span className="text-xs text-muted-foreground">está pensando...</span>
+                      <span className="text-xs text-muted-foreground">
+                        {isProcessing ? "processando..." : "está pensando..."}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-primary rounded-full loading-dot-1" />
@@ -1168,11 +1365,11 @@ npm install react-markdown
                   <div className="flex items-center gap-4">
                     {/* Recording Indicator */}
                     <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                        <div className="absolute inset-0 w-3 h-3 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                      <div className="relative w-4 h-4">
+                        <div className="absolute inset-0 bg-red-500 rounded-full animate-pulse"></div>
+                        <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
                       </div>
-                      <span className="text-sm font-semibold text-red-700 dark:text-red-300">
+                      <span className="text-sm font-semibold text-red-700 dark:text-red-300 animate-pulse">
                         Gravando
                       </span>
                     </div>
@@ -1226,6 +1423,22 @@ npm install react-markdown
                 >
                   <Paperclip className="h-5 w-5" />
                 </button>
+                
+                {currentChat && (currentChat.messages || []).length > 0 && (
+                  <button
+                    onClick={() => setShowSectionControls(!showSectionControls)}
+                    className={cn(
+                      "p-3 rounded-lg transition-colors min-h-[50px] flex items-center justify-center",
+                      showSectionControls
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                    )}
+                    title={showSectionControls ? "Ocultar controles de seção" : "Mostrar controles de seção"}
+                    disabled={isRecording}
+                  >
+                    <FolderOpen className="h-5 w-5" />
+                  </button>
+                )}
               </div>
 
               <div className="flex-1">
@@ -1250,25 +1463,22 @@ npm install react-markdown
               
               {/* Botão dinâmico: Gravar quando vazio, Enviar quando há texto */}
               {input.trim() ? (
-                <button
+                <ProcessingButton
                   onClick={sendMessage}
                   disabled={isLoading}
-                  className={cn(
-                    "p-3 rounded-lg transition-all duration-200 min-h-[50px] flex items-center justify-center",
-                    !isLoading
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 transform hover:scale-105"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
+                  isProcessing={isProcessing}
+                  variant="shimmer"
+                  className="p-3 min-h-[50px] min-w-[50px] rounded-lg flex items-center justify-center"
                   title="Enviar mensagem"
                 >
                   <Send className="h-5 w-5" />
-                </button>
+                </ProcessingButton>
               ) : (
                 <button
                   onClick={startRecording}
                   disabled={isRecording}
                   className={cn(
-                    "p-3 rounded-lg transition-all duration-200 min-h-[50px] flex items-center justify-center",
+                    "p-3 rounded-lg transition-all duration-200 min-h-[50px] min-w-[50px] flex items-center justify-center",
                     !isRecording
                       ? "bg-red-500 hover:bg-red-600 text-white transform hover:scale-105"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -1282,7 +1492,15 @@ npm install react-markdown
             
             <p className="text-xs text-muted-foreground mt-2 text-center">
               Pressione Enter para enviar, Shift+Enter para nova linha • 
-              {isRecording && <span className="text-destructive font-medium"> 🔴 Gravando...</span>}
+              {isRecording && (
+                <span className="text-destructive font-medium animate-pulse inline-flex items-center">
+                  <span className="relative w-2 h-2 mr-1">
+                    <span className="absolute inset-0 bg-red-500 rounded-full animate-pulse"></span>
+                    <span className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></span>
+                  </span>
+                  Gravando...
+                </span>
+              )}
             </p>
           </div>
         </div>

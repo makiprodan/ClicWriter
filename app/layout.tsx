@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ChatGPT Clone",
-  description: "Um clone do ChatGPT criado com Next.js e Magic UI",
+  title: "ClicWriter",
+  description: "Uma aplicação de escrita inteligente criada com Next.js e Magic UI",
 };
 
 export default function RootLayout({
