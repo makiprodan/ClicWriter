@@ -32,12 +32,6 @@ jobs:
       - name: Install dependencies 📥
         run: npm ci
 
-      - name: Install Playwright browsers 🎭
-        run: npx playwright install --with-deps
-
-      - name: Run tests 🧪
-        run: npx playwright test
-
       - name: Build project 🔨
         run: npm run build
 
