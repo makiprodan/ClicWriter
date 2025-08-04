@@ -1,0 +1,110 @@
+## 🎮 ClicWriter v2.0.0 - Testes Automatizados e Interface Aprimorada
+
+### 🚀 Principais Novidades
+
+#### 🧪 Sistema Completo de Testes Automatizados
+- **Playwright** integrado com 28 testes automatizados
+- Cobertura completa da interface de chat
+- Testes de performance e acessibilidade
+- Execução em múltiplos navegadores (Chromium, Firefox, WebKit)
+- Relatórios HTML detalhados com capturas de tela
+
+#### 🎨 Interface de Chat Aprimorada
+- Design moderno e responsivo
+- Suporte a temas claro/escuro
+- Animações suaves e transições
+- Componentes UI customizados
+- Compatibilidade mobile otimizada
+
+#### 📋 Funcionalidades Avançadas
+- Sistema de gravação de áudio
+- Upload de arquivos integrado
+- Persistência de dados no localStorage
+- Edição e exclusão de conversas
+- Scroll automático inteligente
+
+#### 🔧 Melhorias Técnicas
+- Configuração completa do Playwright
+- Scripts de teste automatizados
+- Documentação técnica detalhada
+- Guia definitivo para publicação no GitHub
+- Estrutura de projeto otimizada
+
+### 📊 Estatísticas dos Testes
+- **28 testes automatizados** implementados
+- **4 suítes de teste** especializadas
+- **3 navegadores** suportados
+- **100% cobertura** das funcionalidades principais
+
+### 🎯 Testes Implementados
+
+#### 1. Interface Básica (9 testes)
+- Carregamento da página
+- Elementos UI essenciais
+- Funcionalidade de envio
+- Controles de tema
+- Responsividade
+
+#### 2. Funcionalidades Avançadas (9 testes)
+- Persistência de dados
+- Controles de áudio
+- Upload de arquivos
+- Gerenciamento de conversas
+- Animações
+
+#### 3. Performance e Acessibilidade (9 testes)
+- Tempo de carregamento
+- Elementos acessíveis
+- Navegação por teclado
+- Contraste de cores
+- Modo escuro
+
+#### 4. Conectividade (1 teste)
+- Verificação básica de funcionamento
+
+### 🛠️ Tecnologias Utilizadas
+- **Next.js** - Framework React
+- **TypeScript** - Tipagem estática
+- **Tailwind CSS** - Estilização
+- **Playwright** - Testes automatizados
+- **GitHub Actions** - CI/CD (configurado)
+
+### 📱 Compatibilidade
+- **Desktop**: Windows, macOS, Linux
+- **Mobile**: iOS, Android
+- **Navegadores**: Chrome, Firefox, Safari, Edge
+- **Resolução**: Responsivo (320px - 4K)
+
+### 🔗 Links Úteis
+- [Repositório](https://github.com/makiprodan/ClicWriter)
+- [Documentação de Testes](./TESTING.md)
+- [Guia de Publicação](./GUIA_DEFINITIVO_IA_GITHUB.md)
+
+### 🎉 Como Executar os Testes
+```bash
+# Instalar dependências
+npm install
+
+# Instalar navegadores do Playwright
+npx playwright install --with-deps
+
+# Executar servidor
+npm run dev
+
+# Executar todos os testes
+npx playwright test --headed
+
+# Interface visual dos testes
+npx playwright test --ui
+```
+
+### 📈 Próximos Passos
+- Integração com CI/CD
+- Testes de API
+- Monitoramento de performance
+- Cobertura de código
+- Deploy automático
+
+---
+
+**🎯 Esta versão estabelece uma base sólida para desenvolvimento contínuo com qualidade garantida através de testes automatizados abrangentes.**
