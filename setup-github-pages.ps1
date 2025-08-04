@@ -30,7 +30,13 @@ if ($LASTEXITCODE -eq 0) {
     } | ConvertTo-Json -Depth 3
     
     try {
-        gh api --method POST repos/:owner/:repo/pages --input - <<< $enablePages
+        # Criar arquivo temporário para o JSON
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        $enablePages | Out-File -FilePath $tempFile -Encoding UTF8
+        
+        gh api --method POST repos/:owner/:repo/pages --input $tempFile
+        Remove-Item $tempFile -Force
+        
         Write-Host "✅ GitHub Pages ativado com sucesso!" -ForegroundColor Green
         
         # Aguardar um pouco e verificar novamente
