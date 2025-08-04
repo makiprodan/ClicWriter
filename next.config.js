@@ -8,7 +8,7 @@ const nextConfig = {
   },
   // GitHub Pages configuration
   basePath: process.env.NODE_ENV === 'production' ? '/ClicWriter' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/ClicWriter/' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/ClicWriter' : '',
 }
 
 module.exports = nextConfig
